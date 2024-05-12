@@ -2,8 +2,10 @@
 name: Gitleaks
 
 on:
-  push:
-  pull_request:
+  # push:
+  # pull_request:
+  # manually trigger the workflow
+  workflow_dispatch:
 
 jobs:
   gitleaks:
