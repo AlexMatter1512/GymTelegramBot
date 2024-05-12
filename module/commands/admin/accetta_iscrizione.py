@@ -23,7 +23,7 @@ async def accetta_iscrizione(update: Update, context: CallbackContext):
     for user in users:
         usersKeyboard.append([InlineKeyboardButton(f"{user['full_name']} {user['id']}", callback_data=user['id'])])
 
-    usersKeyboard.append([InlineKeyboardButton("Annulla", callback_data="cancel")])
+    usersKeyboard.append([InlineKeyboardButton("Annulla", callback_data="/cancel")])
     reply_markup = InlineKeyboardMarkup(usersKeyboard)
     await update.message.reply_text("Seleziona l'utente da accettare:", reply_markup=reply_markup)
 
@@ -46,8 +46,10 @@ async def user_selected(update: Update, context: CallbackContext):
     members.insert_one(user)
     waiting_list.delete_one(user)
 
+    await context.bot.send_message(chat_id=user_id, text="🥳 Congratulazioni 🎉, sei stato accettato come membro. Adesso puoi usare tutti i comandi!\n/start")
+
     database.client.close()
-    await query.message.reply_text(f"{user['full_name']} è stato aggiunto ai membri.")
+    await query.edit_message_text(f"{user['full_name']} è stato aggiunto ai membri.")
 
     return ConversationHandler.END
     

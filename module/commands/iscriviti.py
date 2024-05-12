@@ -45,4 +45,6 @@ async def insert_user(update: Update, context: CallbackContext):
     database.client.close()
 
     await update.message.reply_text(f"Ti sei iscritto alla lista d'attesa con il nome: {fullName}, riceverai un messaggio quando sarai stato aggiunto ai membri!")
+    for admin in config["ADMINS"].values():
+        await context.bot.send_message(chat_id=admin, text=f"Nuova richiesta di iscrizione da {fullName} ({userDict['id']})")
     return ConversationHandler.END

@@ -20,6 +20,7 @@ from module.commands import (
 )
 from module.commands.admin import (
     accetta_iscrizione as accetta_iscrizione_command,
+    rimuovi_utente as rimuovi_utente_command,
 )
 import module.shared as shared
 
@@ -44,28 +45,29 @@ def setup_logging():
     logging.getLogger("pymongo").setLevel(logging.WARNING)
 
 def add_handlers(app):
-    # startHandler = CommandHandler("start", start_command.start)
-    startHandler = ConversationHandler(
-        entry_points=[CommandHandler("start", start_command.start)],
+    startHandler = CommandHandler("start", start_command.start)
+    admin_commandsHandler = MessageHandler(filters.Regex(r"admin commands ->"), start_command.admin_commands)
+    normal_commandsHandler = MessageHandler(filters.Regex(r"<- normal commands"), start_command.start)
+    accetta_iscrizioneHandler = ConversationHandler(
+        entry_points=[CommandHandler("accetta_iscrizione", accetta_iscrizione_command.accetta_iscrizione)],
         states={
-            "admin_commands": [MessageHandler(filters.Regex(r"admin commands ->"), start_command.admin_commands)]
+            "user_selected": [CallbackQueryHandler(accetta_iscrizione_command.user_selected, pattern="^[0-9]+$")]
         },
         fallbacks=[
             CommandHandler("cancel", cancel_command.cancel),
             CallbackQueryHandler(cancel_command.cancelQuery, pattern="^/cancel$"),
         ]
     )
-    # admin_commandsHandler = MessageHandler("admin commands ->", start_command.admin_commands)
-    admin_commandsHandler = MessageHandler(filters.Regex(r"admin commands ->"), start_command.admin_commands)
-    normal_commandsHandler = MessageHandler(filters.Regex(r"<- normal commands"), start_command.start)
-    accetta_iscrizioneHandler = ConversationHandler(
-        entry_points=[CommandHandler("accetta_iscrizione", accetta_iscrizione_command.accetta_iscrizione)],
+    rimuovi_iscrizioneHandler = ConversationHandler(
+        entry_points=[CommandHandler("rimuovi_utente", rimuovi_utente_command.rimuovi_utente)],
         states={
-            "user_selected": [CallbackQueryHandler(accetta_iscrizione_command.user_selected)]
+            "choose_list": [CallbackQueryHandler(rimuovi_utente_command.choose_list)],
+            "get_id": [MessageHandler(~filters.COMMAND, rimuovi_utente_command.get_id)],
+            "confirm": [CallbackQueryHandler(rimuovi_utente_command.confirm)]
         },
         fallbacks=[
             CommandHandler("cancel", cancel_command.cancel),
-            CallbackQueryHandler(cancel_command.cancelQuery, pattern="^/cancel$"),
+            CallbackQueryHandler(cancel_command.cancelQuery, pattern="^/cancel$")
         ]
     )
     # iscriviHandler = CommandHandler("iscriviti", iscriviti_command.iscriviti)
@@ -85,6 +87,7 @@ def add_handlers(app):
     app.add_handler(admin_commandsHandler)
     app.add_handler(normal_commandsHandler)
     app.add_handler(accetta_iscrizioneHandler)
+    app.add_handler(rimuovi_iscrizioneHandler)
     app.add_handler(iscriviHandler)
     app.add_handler(prenotaHandler)
 
