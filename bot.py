@@ -21,6 +21,7 @@ from module.commands import (
 from module.commands.admin import (
     accetta_iscrizione as accetta_iscrizione_command,
     rimuovi_utente as rimuovi_utente_command,
+    messaggio_broadcast as messaggio_broadcast_command,
 )
 import module.shared as shared
 
@@ -48,6 +49,8 @@ def add_handlers(app):
     startHandler = CommandHandler("start", start_command.start)
     admin_commandsHandler = MessageHandler(filters.Regex(r"admin commands ->"), start_command.admin_commands)
     normal_commandsHandler = MessageHandler(filters.Regex(r"<- normal commands"), start_command.start)
+
+    # Admin commands
     accetta_iscrizioneHandler = ConversationHandler(
         entry_points=[CommandHandler("accetta_iscrizione", accetta_iscrizione_command.accetta_iscrizione)],
         states={
@@ -70,7 +73,18 @@ def add_handlers(app):
             CallbackQueryHandler(cancel_command.cancelQuery, pattern="^/cancel$")
         ]
     )
-    # iscriviHandler = CommandHandler("iscriviti", iscriviti_command.iscriviti)
+    messaggio_broadcastHandler = ConversationHandler(
+        entry_points=[CommandHandler("messaggio_broadcast", messaggio_broadcast_command.messaggio_broadcast)],
+        states={
+            "get_message": [MessageHandler(None, messaggio_broadcast_command.get_message)]
+        },
+        fallbacks=[
+            CommandHandler("cancel", cancel_command.cancel),
+            CallbackQueryHandler(cancel_command.cancelQuery, pattern="^/cancel$")
+        ]
+    )
+
+    # User commands
     iscriviHandler = ConversationHandler(
         entry_points=[CommandHandler("iscriviti", iscriviti_command.iscriviti)],
         states={
@@ -86,8 +100,11 @@ def add_handlers(app):
     app.add_handler(startHandler)
     app.add_handler(admin_commandsHandler)
     app.add_handler(normal_commandsHandler)
+    # Admin commands
     app.add_handler(accetta_iscrizioneHandler)
     app.add_handler(rimuovi_iscrizioneHandler)
+    app.add_handler(messaggio_broadcastHandler)
+    # User commands
     app.add_handler(iscriviHandler)
     app.add_handler(prenotaHandler)
 

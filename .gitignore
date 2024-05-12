@@ -2,3 +2,5 @@
 config.yaml
 *.log
 __pycache__/
+__pycache__/*
+*.pyc
