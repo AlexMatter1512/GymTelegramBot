@@ -43,7 +43,6 @@ async def insert_user(update: Update, context: CallbackContext):
     waiting_list.insert_one(userDict)
     logging.info(f"User {userDict['id']} added to the waiting list")
     database.client.close()
-    mypassword = "fakepassword"
 
     await update.message.reply_text(f"Ti sei iscritto alla lista d'attesa con il nome: {fullName}, riceverai un messaggio quando sarai stato aggiunto ai membri!")
     return ConversationHandler.END
