@@ -8,8 +8,8 @@ async def imposta_palinsesto(update: Update, context: CallbackContext):
     # Check if the user is an admin
     if update.effective_user.id not in shared.config["ADMINS"].values():
         return await update.message.reply_text("Non sei autorizzato ad utilizzare questo comando.")
-    
-    daysKeyboard = telegramTimeKeyboards.get_week_days_keyboard(6)
+    giorni = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
+    daysKeyboard = telegramTimeKeyboards.get_week_days_keyboard(end_day=6, days=giorni)
 
     await update.message.reply_text("Seleziona il giorno:", reply_markup=daysKeyboard)
     return "select_start_hour"
@@ -81,7 +81,11 @@ async def save_palinsesto_class(update: Update, context: CallbackContext):
     # Save workout class to database
     database = shared.get_db()
     palinsesto = database["palinsesto"]
-    # palinsesto.insert_one(workout_class) this doesent avoid overlapping classes
+    
+    # Check if an index with constraints for the uniqueness of the day already exists otherwise create it
+    if "day_1_start_hour_1_end_hour_1" not in palinsesto.index_information():
+        palinsesto.create_index([("day", 1), ("start_hour", 1), ("end_hour", 1)], unique=True)
+
     # check if there is already a class at that time
     dayClasses = palinsesto.find({"day": workout_class["day"]})
     for dayClass in dayClasses:
