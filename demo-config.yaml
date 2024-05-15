@@ -1,0 +1,11 @@
+TOKEN: "yourTelegramBotToken"
+
+MONGO:
+  host: "mongo"
+  port: 27017
+  db: "gym"
+  username: "username"
+  password: "password"
+
+ADMINS:
+  Alex: adminUserId
