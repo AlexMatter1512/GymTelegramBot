@@ -26,8 +26,13 @@ class telegramTimeKeyboards:
     @staticmethod
     def get_hours_keyboard(start_hour: int = 0, end_hour: int = 23) -> InlineKeyboardMarkup:
         hoursKeyboard = []
-        for hour in range(start_hour, end_hour + 1, 2):
-            hoursKeyboard.append([InlineKeyboardButton(f"{hour:02d}", callback_data=f"{hour:02d}"), InlineKeyboardButton(f"{hour + 1:02d}", callback_data=f"{hour + 1:02d}")])
+        for hour in range(start_hour, end_hour + 1, 3):
+            row = [InlineKeyboardButton(f"{hour:02d}", callback_data=f"{hour:02d}")]
+            if hour + 1 <= end_hour:
+                row.append(InlineKeyboardButton(f"{hour + 1:02d}", callback_data=f"{hour + 1:02d}"))
+            if hour + 2 <= end_hour:
+                row.append(InlineKeyboardButton(f"{hour + 2:02d}", callback_data=f"{hour + 2:02d}"))
+            hoursKeyboard.append(row)
         hoursKeyboard.append([InlineKeyboardButton("Annulla", callback_data="/cancel")])
         return InlineKeyboardMarkup(hoursKeyboard)
 

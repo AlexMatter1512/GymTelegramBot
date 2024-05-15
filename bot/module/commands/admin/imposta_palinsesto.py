@@ -21,7 +21,7 @@ async def select_start_hour(update: Update, context: CallbackContext):
     logging.info(f"Day selected: {day}")
     await context.bot.send_message(chat_id=query.message.chat_id, text=f"Giorno selezionato: {day}")
 
-    hoursKeyboard = telegramTimeKeyboards.get_hours_keyboard(6, 22)
+    hoursKeyboard = telegramTimeKeyboards.get_hours_keyboard(0, 24)
     
     await query.edit_message_text(f"Seleziona l'ora di inizio per {day}:", reply_markup=hoursKeyboard)
     return "select_start_minute"
