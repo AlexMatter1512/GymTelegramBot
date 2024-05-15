@@ -4,6 +4,6 @@ config.yaml
 __pycache__/
 __pycache__/*
 *.pyc
-*config*
+config*
 .env.*
 mongodb/data/
