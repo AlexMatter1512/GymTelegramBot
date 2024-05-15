@@ -8,4 +8,4 @@ MONGO:
   password: "password"
 
 ADMINS:
-  Alex: adminUserId
+  Alex: adminUserIdd
