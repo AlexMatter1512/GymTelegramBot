@@ -1,0 +1,23 @@
+services:
+  mongo:
+    image: mongo
+    restart: always
+    env_file:
+      - mongodb/.env.mongo
+    # environment:
+    #   - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+    #   - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - ./mongodb/data:/data/db
+
+  bot:
+    build: ./bot
+    restart: always
+    volumes:
+      - ./config-docker.yaml:/bot/config.yaml
+
+      # For development
+      - ./bot/:/bot/
+
+    depends_on:
+      - mongo

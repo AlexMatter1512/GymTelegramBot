@@ -1,0 +1,4 @@
+colorlog==6.8.2
+pymongo==4.7.2
+python-telegram-bot==21.1.1
+PyYAML==6.0.1

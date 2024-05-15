@@ -16,23 +16,23 @@ def load_config():
 
 config = load_config()
 
+def get_db():
+    HOST = config["MONGO"]["host"]
+    PORT = config["MONGO"]["port"]
+    USERNAME = config["MONGO"]["username"]
+    PASSWORD = config["MONGO"]["password"]
+    DB = config["MONGO"]["db"]
+    # database = pymongo.MongoClient(f"mongodb://{HOST}:{PORT}")[DB]
+    database = pymongo.MongoClient(f"mongodb://{USERNAME}:{PASSWORD}@{HOST}:{PORT}")[DB]
+    return database
+
 def is_allowed(user: User):
     userDoc = user.to_dict()
 
     # DB connection
-    HOST = config["MONGO"]["host"]
-    PORT = config["MONGO"]["port"]
-    DB = config["MONGO"]["db"]
-    database = pymongo.MongoClient(f"mongodb://{HOST}:{PORT}")[DB]
+    database = get_db()
     allowed_users = database["members"]
     isAllowed = allowed_users.find_one(userDoc) is not None
     database.client.close()
 
     return isAllowed
-
-def get_db():
-    HOST = config["MONGO"]["host"]
-    PORT = config["MONGO"]["port"]
-    DB = config["MONGO"]["db"]
-    database = pymongo.MongoClient(f"mongodb://{HOST}:{PORT}")[DB]
-    return database

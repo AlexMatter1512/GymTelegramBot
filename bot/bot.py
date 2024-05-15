@@ -132,7 +132,6 @@ def load_config():
 def main():
     setup_logging()
     load_config()
-    logging.info("TOKEN: %s", config["TOKEN"])
     app = ApplicationBuilder().token(config["TOKEN"]).build()
     add_handlers(app)
     app.run_polling()
