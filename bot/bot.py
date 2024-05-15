@@ -23,6 +23,7 @@ from module.commands.admin import (
     rimuovi_utente as rimuovi_utente_command,
     messaggio_broadcast as messaggio_broadcast_command,
     imposta_palinsesto as imposta_palinsesto_command,
+    aggiungi_corso as aggiungi_corso_command,
 )
 import module.shared as shared
 
@@ -77,11 +78,12 @@ def add_handlers(app):
     imposta_palinsestoHandler = ConversationHandler(
         entry_points=[CommandHandler("imposta_palinsesto", imposta_palinsesto_command.imposta_palinsesto)],
         states={
-            "select_start_hour": [CallbackQueryHandler(imposta_palinsesto_command.select_start_hour, pattern="^[1-7]$")],
-            "select_start_minute": [CallbackQueryHandler(imposta_palinsesto_command.select_start_minute, pattern="^[0-9]{2}$")],
-            "select_end_hour": [CallbackQueryHandler(imposta_palinsesto_command.select_end_hour, pattern="^[0-9]{2}$")],
-            "select_end_minute": [CallbackQueryHandler(imposta_palinsesto_command.select_end_minute, pattern="^[0-9]{2}$")],
-            "save_palinsesto_class": [CallbackQueryHandler(imposta_palinsesto_command.save_palinsesto_class, pattern="^[0-9]{2}$")]
+            "select_day": [CallbackQueryHandler(imposta_palinsesto_command.select_day, pattern="^(?!\/).*$")],
+            "select_start_hour": [CallbackQueryHandler(imposta_palinsesto_command.select_start_hour, pattern="^(?!\/).*$")],
+            "select_start_minute": [CallbackQueryHandler(imposta_palinsesto_command.select_start_minute, pattern="^(?!\/).*$")],
+            "select_end_hour": [CallbackQueryHandler(imposta_palinsesto_command.select_end_hour, pattern="^(?!\/).*$")],
+            "select_end_minute": [CallbackQueryHandler(imposta_palinsesto_command.select_end_minute, pattern="^(?!\/).*$")],
+            "save_palinsesto_class": [CallbackQueryHandler(imposta_palinsesto_command.save_palinsesto_class, pattern="^(?!\/).*$")]
         },
         fallbacks=[
             CommandHandler("cancel", cancel_command.cancel),
@@ -92,6 +94,17 @@ def add_handlers(app):
         entry_points=[CommandHandler("messaggio_broadcast", messaggio_broadcast_command.messaggio_broadcast)],
         states={
             "get_message": [MessageHandler(None, messaggio_broadcast_command.get_message)]
+        },
+        fallbacks=[
+            CommandHandler("cancel", cancel_command.cancel),
+            CallbackQueryHandler(cancel_command.cancelQuery, pattern="^/cancel$")
+        ]
+    )
+    aggiungi_corsoHandler = ConversationHandler(
+        entry_points=[CommandHandler("aggiungi_corso", aggiungi_corso_command.aggiungi_corso)],
+        states={
+            "get_course_name": [MessageHandler(~filters.COMMAND, aggiungi_corso_command.get_course_name)],
+            "confirm_course_name": [CallbackQueryHandler(aggiungi_corso_command.confirm_course_name, pattern="^(confirm|cancel)$")]
         },
         fallbacks=[
             CommandHandler("cancel", cancel_command.cancel),
@@ -120,6 +133,7 @@ def add_handlers(app):
     app.add_handler(rimuovi_iscrizioneHandler)
     app.add_handler(imposta_palinsestoHandler)
     app.add_handler(messaggio_broadcastHandler)
+    app.add_handler(aggiungi_corsoHandler)
     # User commands
     app.add_handler(iscriviHandler)
     app.add_handler(prenotaHandler)
