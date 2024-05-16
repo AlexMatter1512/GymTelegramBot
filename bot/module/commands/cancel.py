@@ -8,6 +8,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await context.bot.send_message(
         chat_id=update.effective_chat.id, text="Operazione annullata."
     )
+    context.user_data.clear()
     return ConversationHandler.END
 
 async def cancelQuery(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
