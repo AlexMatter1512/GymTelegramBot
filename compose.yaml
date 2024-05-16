@@ -9,6 +9,10 @@ services:
     #   - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - ./mongodb/data:/data/db
+    
+    # for development
+    ports:
+      - "27017:27017"
 
   bot:
     build: ./bot

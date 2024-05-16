@@ -17,6 +17,8 @@ from module.commands import (
     start as start_command,
     prenota as prenota_command,
     iscriviti as iscriviti_command,
+    info as info_command,
+    palinsesto as palinsesto_command,
 )
 from module.commands.admin import (
     accetta_iscrizione as accetta_iscrizione_command,
@@ -113,6 +115,7 @@ def add_handlers(app):
     )
 
     # User commands
+    infoHandler = CommandHandler("info", info_command.info)
     iscriviHandler = ConversationHandler(
         entry_points=[CommandHandler("iscriviti", iscriviti_command.iscriviti)],
         states={
@@ -124,8 +127,20 @@ def add_handlers(app):
         ]
     )
     prenotaHandler = CommandHandler("prenota", prenota_command.prenota)
+    palinsestoHandler = ConversationHandler(
+        entry_points=[CommandHandler("palinsesto", palinsesto_command.selezionaCorso)],
+        states={
+            "selezionaGiorno": [CallbackQueryHandler(palinsesto_command.selezionaGiorno)],
+            "sendPalinsesto": [CallbackQueryHandler(palinsesto_command.sendPalinsesto)]
+        },
+        fallbacks=[
+            CommandHandler("cancel", cancel_command.cancel),
+            CallbackQueryHandler(cancel_command.cancelQuery, pattern="^/cancel$")
+        ]
+    )
 
     app.add_handler(startHandler)
+    app.add_handler(infoHandler)
     app.add_handler(admin_commandsHandler)
     app.add_handler(normal_commandsHandler)
     # Admin commands
@@ -137,6 +152,7 @@ def add_handlers(app):
     # User commands
     app.add_handler(iscriviHandler)
     app.add_handler(prenotaHandler)
+    app.add_handler(palinsestoHandler)
 
 def load_config():
     global config

@@ -36,3 +36,13 @@ def is_allowed(user: User):
     database.client.close()
 
     return isAllowed
+
+def get_res(name: str):
+     #Read the respective resource file
+    resource_path = os.path.join(os.path.dirname(__file__), f'../res/{name}.txt')
+    try:
+        with open(resource_path, 'r') as file:
+            return file.read()
+    except FileNotFoundError:
+        logging.error(f"Resource file {name}.txt not found")
+        return None

@@ -1,0 +1,10 @@
+👋🏼 Ciao, sono il bot ufficiale della palestra *Augusta Training*.
+
+Al momento sono in fase di sviluppo ma presto potrai:
+- Iscriverti
+- Prenotare le classi
+- Visualizzare gli allenamenti
+- Ricevere comunicazioni
+... e molto altro ancora.
+
+Made with ♥ by @AlexMatter1512

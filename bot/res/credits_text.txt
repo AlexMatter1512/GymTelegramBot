@@ -1,0 +1,4 @@
+Questo bot è un progetto open source creato da @AlexMatter1512
+
+Se vuoi contribuire, puoi farlo su GitHub:
+https://github.com/AlexMatter1512/GymTelegramBot
