@@ -52,3 +52,9 @@ async def is_in_conversation(update, context):
         await update.message.reply_text("Completa o termina (/cancel) la conversazione corrente prima di iniziarne una nuova.")
         return True
     return False
+
+def entry_point_decorator(func):
+    async def wrapper(update, context):
+        context.user_data["in_conversation"] = True
+        return await func(update, context)
+    return wrapper

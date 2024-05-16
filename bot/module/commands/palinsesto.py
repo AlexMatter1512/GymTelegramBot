@@ -4,8 +4,9 @@ from module import shared
 from module.vars import WEEKDAYS
 import logging
 
+@shared.entry_point_decorator
 async def selezionaCorso(update: Update, context: CallbackContext): #Entry point
-    context.user_data["in_conversation"] = True
+    # context.user_data["in_conversation"] = True
 
     logging.info(f"user {update.effective_user.id} has called palinsesto command")
     database = shared.get_db()
