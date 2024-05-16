@@ -46,3 +46,9 @@ def get_res(name: str):
     except FileNotFoundError:
         logging.error(f"Resource file {name}.txt not found")
         return None
+    
+async def is_in_conversation(update, context):
+    if context.user_data.get("in_conversation"):
+        await update.message.reply_text("Completa o termina (/cancel) la conversazione corrente prima di iniziarne una nuova.")
+        return True
+    return False

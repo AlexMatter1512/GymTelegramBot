@@ -46,5 +46,5 @@ async def insert_user(update: Update, context: CallbackContext):
 
     await update.message.reply_text(f"Ti sei iscritto alla lista d'attesa con il nome: {fullName}, riceverai un messaggio quando sarai stato aggiunto ai membri!")
     for admin in config["ADMINS"].values():
-        await context.bot.send_message(chat_id=admin, text=f"Nuova richiesta di iscrizione da:\n{fullName} ({userDict.get("username")} {userDict['id']})")
+        await context.bot.send_message(chat_id=admin, text=f"Nuova richiesta di iscrizione da:\n{fullName} ({userDict.get("username")} {userDict['id']})\n\nPer accettare o rifiutare l'iscrizione, utilizza i comandi /accetta_iscrizione o /rimuovi_utente.")
     return ConversationHandler.END

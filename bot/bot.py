@@ -4,6 +4,7 @@ from warnings import filterwarnings
 from telegram.warnings import PTBUserWarning
 from telegram.ext import filters
 from telegram.ext import (
+    Application,
     Updater,
     CommandHandler,
     CallbackContext,
@@ -25,7 +26,7 @@ from module.commands.admin import (
     rimuovi_utente as rimuovi_utente_command,
     messaggio_broadcast as messaggio_broadcast_command,
     imposta_palinsesto as imposta_palinsesto_command,
-    aggiungi_corso as aggiungi_corso_command,
+    gestisci_corsi as gestisci_corsi_command,
 )
 import module.shared as shared
 
@@ -49,7 +50,7 @@ def setup_logging():
     # disable logging from pymongo module
     logging.getLogger("pymongo").setLevel(logging.WARNING)
 
-def add_handlers(app):
+def add_handlers(app: Application):
     startHandler = CommandHandler("start", start_command.start)
     admin_commandsHandler = MessageHandler(filters.Regex(r"admin commands ->"), start_command.admin_commands)
     normal_commandsHandler = MessageHandler(filters.Regex(r"<- normal commands"), start_command.start)
@@ -102,11 +103,14 @@ def add_handlers(app):
             CallbackQueryHandler(cancel_command.cancelQuery, pattern="^/cancel$")
         ]
     )
-    aggiungi_corsoHandler = ConversationHandler(
-        entry_points=[CommandHandler("aggiungi_corso", aggiungi_corso_command.aggiungi_corso)],
+    gestisci_corsiHandler = ConversationHandler(
+        entry_points=[CommandHandler("gestisci_corsi", gestisci_corsi_command.gestisci_corsi)],
         states={
-            "get_course_name": [MessageHandler(~filters.COMMAND, aggiungi_corso_command.get_course_name)],
-            "confirm_course_name": [CallbackQueryHandler(aggiungi_corso_command.confirm_course_name, pattern="^(confirm|cancel)$")]
+            # "select_action": [CallbackQueryHandler(gestisci_corsi_command.select_action, pattern="^(add_course|remove_course)$")],
+            # "ask_course_name": [MessageHandler(~filters.COMMAND, gestisci_corsi_command.ask_course_name)],
+            "ask_course_name": [CallbackQueryHandler(gestisci_corsi_command.ask_course_name, pattern="^(add_course|remove_course)$")],
+            "get_course_name": [MessageHandler(~filters.COMMAND, gestisci_corsi_command.get_course_name)],
+            "confirm_course_name": [CallbackQueryHandler(gestisci_corsi_command.confirm_course_name, pattern="^(confirm|cancel)$")]
         },
         fallbacks=[
             CommandHandler("cancel", cancel_command.cancel),
@@ -130,8 +134,8 @@ def add_handlers(app):
     palinsestoHandler = ConversationHandler(
         entry_points=[CommandHandler("palinsesto", palinsesto_command.selezionaCorso)],
         states={
-            "selezionaGiorno": [CallbackQueryHandler(palinsesto_command.selezionaGiorno)],
-            "sendPalinsesto": [CallbackQueryHandler(palinsesto_command.sendPalinsesto)]
+            "selezionaGiorno": [CallbackQueryHandler(palinsesto_command.selezionaGiorno, pattern="^(?!\/).*$")],
+            "sendPalinsesto": [CallbackQueryHandler(palinsesto_command.sendPalinsesto, pattern="^(?!\/).*$")]
         },
         fallbacks=[
             CommandHandler("cancel", cancel_command.cancel),
@@ -140,16 +144,18 @@ def add_handlers(app):
     )
 
     app.add_handler(startHandler)
-    app.add_handler(infoHandler)
     app.add_handler(admin_commandsHandler)
     app.add_handler(normal_commandsHandler)
+    
     # Admin commands
     app.add_handler(accetta_iscrizioneHandler)
     app.add_handler(rimuovi_iscrizioneHandler)
     app.add_handler(imposta_palinsestoHandler)
     app.add_handler(messaggio_broadcastHandler)
-    app.add_handler(aggiungi_corsoHandler)
+    app.add_handler(gestisci_corsiHandler)
+    
     # User commands
+    app.add_handler(infoHandler)
     app.add_handler(iscriviHandler)
     app.add_handler(prenotaHandler)
     app.add_handler(palinsestoHandler)

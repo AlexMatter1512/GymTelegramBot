@@ -1,10 +1,13 @@
 from telegram import Update
-from telegram.ext import CallbackContext
+from telegram.ext import CallbackContext, ConversationHandler
 import random
 from module import shared
 import logging
 
 async def info(update: Update, context: CallbackContext):
+    if await shared.is_in_conversation(update, context):
+        return
+    
     picsFile = shared.get_res("community_pics") 
     if picsFile is not None:
         logging.info("Sending random picture from community_pics")

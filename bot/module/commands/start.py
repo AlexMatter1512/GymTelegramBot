@@ -36,7 +36,7 @@ async def admin_commands (update: Update, context: CallbackContext):
         [KeyboardButton("/accetta_iscrizione"), KeyboardButton("/rimuovi_utente")],
         [KeyboardButton("/annulla_prenotazione"), KeyboardButton("/aggiungi_workout")],
         [KeyboardButton("/imposta_palinsesto"), KeyboardButton("/messaggio_broadcast")],
-        [KeyboardButton("/aggiungi_corso"), KeyboardButton("/rimuovi_corso")],
+        [KeyboardButton("/gestisci_corsi")],#, KeyboardButton("/rimuovi_corso")],
         [KeyboardButton("/cancel")]
     ]
     reply_markup = ReplyKeyboardMarkup(commandKeyboard, resize_keyboard=True)
