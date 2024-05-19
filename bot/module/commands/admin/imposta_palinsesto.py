@@ -86,17 +86,42 @@ async def select_end_minute(update: Update, context: CallbackContext):
 
     partitionsKeyboard = telegramTimeKeyboards.get_hours_partitions_keyboard(15)
     await context.bot.send_message(chat_id=query.message.chat_id, text="Seleziona i minuti di fine:", reply_markup=partitionsKeyboard)
-    return "save_palinsesto_class"
+    return "select_max_people"
 
- 
-async def save_palinsesto_class(update: Update, context: CallbackContext):
+async def select_max_people(update: Update, context: CallbackContext):
     query = update.callback_query
-    end_hour = context.user_data["end_hour"]
     end_minute = query.data
+    end_hour = context.user_data["end_hour"]
     context.user_data["end_minute"] = end_minute
     end_hour_message = context.user_data["end_hour_message"]
     logging.getLogger("gym_bot").info(f"End minute selected: {end_minute}")
     await context.bot.edit_message_text(chat_id=query.message.chat_id, message_id=end_hour_message.message_id, text=f"Ora di fine selezionata: {end_hour}:{end_minute}")
+
+    await query.edit_message_text("Quante persone possono partecipare alla classe?")
+    return "save_palinsesto_class"
+
+ 
+async def save_palinsesto_class(update: Update, context: CallbackContext):
+    message = update.message
+    max_people = update.message.text
+    # if max people cant be converted to int return
+    try:
+        max_people = int(max_people)
+        if max_people < 1:
+            await message.reply_text("Il numero di persone deve essere maggiore di 0")
+            return shared.end_conversation(update, context)
+        if max_people > 100:
+            await message.reply_text("Il numero di persone deve essere minore di 100")
+            return shared.end_conversation(update, context)
+    except:
+        await message.reply_text("Il numero di persone deve essere un numero intero")
+        return shared.end_conversation(update, context)
+    # end_hour = context.user_data["end_hour"]
+    # end_minute = context.user_data["end_minute"]
+    
+    # end_hour_message = context.user_data["end_hour_message"]
+    # logging.getLogger("gym_bot").info(f"End minute selected: {end_minute}")
+    # await context.bot.edit_message_text(chat_id=query.message.chat_id, message_id=end_hour_message.message_id, text=f"Ora di fine selezionata: {end_hour}:{end_minute}")
 
     # Workout class data dict
     workout_class = {
@@ -105,7 +130,8 @@ async def save_palinsesto_class(update: Update, context: CallbackContext):
         "start_hour": context.user_data["start_hour"],
         "start_minute": context.user_data["start_minute"],
         "end_hour": context.user_data["end_hour"],
-        "end_minute": context.user_data["end_minute"]
+        "end_minute": context.user_data["end_minute"],
+        "max_people": str(max_people)
     }
 
     # Save workout class to database
@@ -121,12 +147,12 @@ async def save_palinsesto_class(update: Update, context: CallbackContext):
     dayClasses = palinsesto.find({"day": workout_class["day"], "corso": workout_class["corso"]})
     for dayClass in dayClasses:
         if workout_class["start_hour"] >= dayClass["start_hour"] and workout_class["start_hour"] < dayClass["end_hour"] or workout_class["end_hour"] > dayClass["start_hour"] and workout_class["end_hour"] <= dayClass["end_hour"]:
-            await query.edit_message_text("⚠️ Esiste già una classe per quel corso in quell'orario:")
-            await query.message.reply_text(f"{dayClass["corso"]} {dayClass["day"]}\nOra di inizio: {dayClass['start_hour']}:{dayClass['start_minute']}\nOra di fine: {dayClass['end_hour']}:{dayClass['end_minute']}")
+            await message.reply_text("⚠️ Esiste già una classe per quel corso in quell'orario:")
+            await message.reply_text(f"{dayClass["corso"]} {dayClass["day"]}\nOra di inizio: {dayClass['start_hour']}:{dayClass['start_minute']}\nOra di fine: {dayClass['end_hour']}:{dayClass['end_minute']}")
             return shared.end_conversation(update, context)
     palinsesto.insert_one(workout_class)
     database.client.close()
 
-    await query.edit_message_text("Classe aggiunta al palinsesto!")
+    await message.reply_text("Classe aggiunta al /palinsesto!")
 
     return shared.end_conversation(update, context)

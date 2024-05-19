@@ -29,6 +29,7 @@ def get_db():
 
 def is_allowed(user: User):
     userDoc = user.to_dict()
+    userDoc["id"] = str(userDoc["id"])
 
     # DB connection
     database = get_db()

@@ -105,13 +105,15 @@ def add_handlers(app: Application):
             "select_start_minute": [CallbackQueryHandler(imposta_palinsesto_command.select_start_minute, pattern="^(?!/).*$")],
             "select_end_hour": [CallbackQueryHandler(imposta_palinsesto_command.select_end_hour, pattern="^(?!/).*$")],
             "select_end_minute": [CallbackQueryHandler(imposta_palinsesto_command.select_end_minute, pattern="^(?!/).*$")],
-            "save_palinsesto_class": [CallbackQueryHandler(imposta_palinsesto_command.save_palinsesto_class, pattern="^(?!/).*$")]
+            "select_max_people": [CallbackQueryHandler(imposta_palinsesto_command.select_max_people, pattern="^(?!/).*$")],
+            "save_palinsesto_class": [MessageHandler(~filters.COMMAND, imposta_palinsesto_command.save_palinsesto_class)]
         },
         fallbacks=[
             CommandHandler("cancel", cancel_command.cancel),
             CallbackQueryHandler(cancel_command.cancelQuery, pattern="^/cancel$")
         ]
     )
+
     messaggio_broadcastHandler = ConversationHandler(
         entry_points=[CommandHandler("messaggio_broadcast", messaggio_broadcast_command.messaggio_broadcast)],
         states={
@@ -150,7 +152,19 @@ def add_handlers(app: Application):
             CallbackQueryHandler(cancel_command.cancelQuery, pattern="^/cancel$"),
         ]
     )
-    prenotaHandler = CommandHandler("prenota", prenota_command.prenota)
+    prenotaHandler = ConversationHandler(
+        entry_points=[CommandHandler("prenota", prenota_command.prenota)],
+        states={
+            "selezionaGiorno": [CallbackQueryHandler(prenota_command.choose_day, pattern="^(?!/).*$")],
+            "choose_class": [CallbackQueryHandler(prenota_command.choose_class, pattern="^(today|tomorrow)$")],
+            "display_class_info_and_confirm": [CallbackQueryHandler(prenota_command.display_class_info_and_confirm, pattern="^(?!/).*$")],
+            "handle_confirmation": [CallbackQueryHandler(prenota_command.handle_confirmation, pattern="^(confirm|cancel)$")]
+        },
+        fallbacks=[
+            CommandHandler("cancel", cancel_command.cancel),
+            CallbackQueryHandler(cancel_command.cancelQuery, pattern="^/cancel$")
+        ]
+    )
     palinsestoHandler = ConversationHandler(
         entry_points=[CommandHandler("palinsesto", palinsesto_command.selezionaCorso)],
         states={
