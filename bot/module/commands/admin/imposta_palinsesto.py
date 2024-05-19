@@ -5,6 +5,7 @@ from module import shared
 from module.utils.telegramTimeKeyboards import telegramTimeKeyboards
 from module.vars import WEEKDAYS
 
+@shared.entry_point_decorator
 async def imposta_palinsesto(update: Update, context: CallbackContext): #selezione corso
     # Check if the user is an admin
     if update.effective_user.id not in shared.config["ADMINS"].values():
@@ -12,7 +13,7 @@ async def imposta_palinsesto(update: Update, context: CallbackContext): #selezio
     database = shared.get_db()
     if database["corsi"].count_documents({}) == 0:
         await update.message.reply_text("Non ci sono corsi disponibili, aggiungine uno con il comando /aggiungi_corso.")
-        return ConversationHandler.END
+        return shared.end_conversation(update, context)
     
     corsi = database["corsi"].find()
     corsiKeyboard = [[InlineKeyboardButton(corso["nome"], callback_data=corso["nome"])] for corso in corsi]
@@ -25,7 +26,7 @@ async def select_day(update: Update, context: CallbackContext):
     query = update.callback_query
     corso = query.data
     context.user_data["corso"] = corso
-    logging.info(f"Corso selected: {corso}")
+    logging.getLogger("gym_bot").info(f"Corso selected: {corso}")
     await query.edit_message_text(text=f"Corso selezionato: {corso}")
     weekdays = WEEKDAYS["ita"]
     daysKeyboard = telegramTimeKeyboards.get_week_days_keyboard(end_day=6, days=weekdays)
@@ -37,7 +38,7 @@ async def select_start_hour(update: Update, context: CallbackContext):
     query = update.callback_query
     day = query.data
     context.user_data["day"] = day
-    logging.info(f"Day selected: {day}")
+    logging.getLogger("gym_bot").info(f"Day selected: {day}")
     await query.edit_message_text(text=f"Giorno selezionato: {day}")
 
     hoursKeyboard = telegramTimeKeyboards.get_hours_keyboard(0, 23)
@@ -49,7 +50,7 @@ async def select_start_minute(update: Update, context: CallbackContext):
     query = update.callback_query
     start_hour = query.data
     context.user_data["start_hour"] = start_hour
-    logging.info(f"Start hour selected: {start_hour}")
+    logging.getLogger("gym_bot").info(f"Start hour selected: {start_hour}")
     # await context.bot.send_message(chat_id=query.message.chat_id, text=f"Ora di inizio selezionata: {start_hour}")
     context.user_data["start_hour_message"] = await query.edit_message_text(f"Ora di inizio selezionata: {start_hour}")
 
@@ -65,7 +66,7 @@ async def select_end_hour(update: Update, context: CallbackContext):
     start_minute = query.data
     start_hour_message = context.user_data["start_hour_message"]
     context.user_data["start_minute"] = start_minute
-    logging.info(f"Start minute selected: {start_minute}")
+    logging.getLogger("gym_bot").info(f"Start minute selected: {start_minute}")
 
     await context.bot.edit_message_text(chat_id=query.message.chat_id, message_id=start_hour_message.message_id, text=f"Ora di inizio selezionata: {start_hour}:{start_minute}")
 
@@ -80,20 +81,21 @@ async def select_end_minute(update: Update, context: CallbackContext):
     query = update.callback_query
     end_hour = query.data
     context.user_data["end_hour"] = end_hour
-    logging.info(f"End hour selected: {end_hour}")
+    logging.getLogger("gym_bot").info(f"End hour selected: {end_hour}")
     context.user_data["end_hour_message"] = await query.edit_message_text(f"Ora di fine selezionata: {end_hour}")
 
     partitionsKeyboard = telegramTimeKeyboards.get_hours_partitions_keyboard(15)
     await context.bot.send_message(chat_id=query.message.chat_id, text="Seleziona i minuti di fine:", reply_markup=partitionsKeyboard)
     return "save_palinsesto_class"
 
+ 
 async def save_palinsesto_class(update: Update, context: CallbackContext):
     query = update.callback_query
     end_hour = context.user_data["end_hour"]
     end_minute = query.data
     context.user_data["end_minute"] = end_minute
     end_hour_message = context.user_data["end_hour_message"]
-    logging.info(f"End minute selected: {end_minute}")
+    logging.getLogger("gym_bot").info(f"End minute selected: {end_minute}")
     await context.bot.edit_message_text(chat_id=query.message.chat_id, message_id=end_hour_message.message_id, text=f"Ora di fine selezionata: {end_hour}:{end_minute}")
 
     # Workout class data dict
@@ -113,7 +115,7 @@ async def save_palinsesto_class(update: Update, context: CallbackContext):
     # Check if an index with constraints for the uniqueness of the day already exists otherwise create it
     if "corso_1_day_1_start_hour_1_end_hour_1" not in palinsesto.index_information():
         index = palinsesto.create_index([("corso", 1), ("day", 1), ("start_hour", 1), ("end_hour", 1)], unique=True)
-        logging.info(f"Index created: {index}")
+        logging.getLogger("gym_bot").info(f"Index created: {index}")
 
     # check if there is already a class at that time
     dayClasses = palinsesto.find({"day": workout_class["day"], "corso": workout_class["corso"]})
@@ -121,10 +123,10 @@ async def save_palinsesto_class(update: Update, context: CallbackContext):
         if workout_class["start_hour"] >= dayClass["start_hour"] and workout_class["start_hour"] < dayClass["end_hour"] or workout_class["end_hour"] > dayClass["start_hour"] and workout_class["end_hour"] <= dayClass["end_hour"]:
             await query.edit_message_text("⚠️ Esiste già una classe per quel corso in quell'orario:")
             await query.message.reply_text(f"{dayClass["corso"]} {dayClass["day"]}\nOra di inizio: {dayClass['start_hour']}:{dayClass['start_minute']}\nOra di fine: {dayClass['end_hour']}:{dayClass['end_minute']}")
-            return ConversationHandler.END
+            return shared.end_conversation(update, context)
     palinsesto.insert_one(workout_class)
     database.client.close()
 
     await query.edit_message_text("Classe aggiunta al palinsesto!")
 
-    return ConversationHandler.END
+    return shared.end_conversation(update, context)

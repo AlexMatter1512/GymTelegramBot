@@ -3,6 +3,7 @@ from telegram.ext import CallbackContext, ConversationHandler
 import logging
 from module import shared
 
+@shared.entry_point_decorator
 async def gestisci_corsi(update: Update, context: CallbackContext):
     if update.effective_user.id not in shared.config["ADMINS"].values():
         return await update.message.reply_text("Non sei autorizzato ad utilizzare questo comando.")
@@ -13,7 +14,7 @@ async def gestisci_corsi(update: Update, context: CallbackContext):
 
 async def ask_course_name(update: Update, context: CallbackContext):
     context.user_data["action"] = update.callback_query.data
-    logging.info(f"Action: {context.user_data['action']}")
+    logging.getLogger("gym_bot").info(f"Action: {context.user_data['action']}")
     if update.effective_user.id not in shared.config["ADMINS"].values():
         return await update.callback_query.message.reply_text("Non sei autorizzato ad utilizzare questo comando.")
     await update.callback_query.message.reply_text("Inserisci il nome del corso:")
@@ -44,7 +45,7 @@ async def add_course(update: Update, context: CallbackContext):
     database = shared.get_db()
     if database["corsi"].count_documents({"nome": course_name}) > 0:
         await update.callback_query.edit_message_text("Il corso è già presente.")
-        return ConversationHandler.END
+        return shared.end_conversation(update, context)
     
     corso = {"nome": course_name}
     database["corsi"].insert_one(corso)
@@ -52,14 +53,15 @@ async def add_course(update: Update, context: CallbackContext):
     await update.callback_query.edit_message_text(f"Il corso {course_name} è stato aggiunto.")
     database.client.close()
 
-    return ConversationHandler.END
+    return shared.end_conversation(update, context)
 
+ 
 async def remove_course(update: Update, context: CallbackContext):
     course_name = context.user_data["course_name"]
     database = shared.get_db()
     if database["corsi"].count_documents({"nome": course_name}) == 0:
         await update.callback_query.edit_message_text("Il corso non è presente.")
-        return ConversationHandler.END
+        return shared.end_conversation(update, context)
     
     database["corsi"].delete_many({"nome": course_name})
     database["palinsesto"].delete_many({"corso": course_name})
@@ -67,5 +69,5 @@ async def remove_course(update: Update, context: CallbackContext):
     await update.callback_query.edit_message_text(f"Il corso {course_name} è stato rimosso.")
     database.client.close()
 
-    return ConversationHandler.END
+    return shared.end_conversation(update, context)
     

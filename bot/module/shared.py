@@ -3,6 +3,7 @@ import os
 import logging
 import pymongo
 from telegram import User
+from telegram.ext import ConversationHandler
 
 def load_config():
     config_path = os.path.join(os.path.dirname(__file__), '../config.yaml')
@@ -11,7 +12,7 @@ def load_config():
                 config = yaml.safe_load(stream)
             except yaml.YAMLError as exc:
                 # print(f"Error loading YAML file: {exc}")
-                logging.error(f"Error loading YAML file: {exc}")
+                logging.getLogger("gym_bot").error(f"Error loading YAML file: {exc}")
     return config
 
 config = load_config()
@@ -44,7 +45,7 @@ def get_res(name: str):
         with open(resource_path, 'r') as file:
             return file.read()
     except FileNotFoundError:
-        logging.error(f"Resource file {name}.txt not found")
+        logging.getLogger("gym_bot").error(f"Resource file {name}.txt not found")
         return None
     
 async def is_in_conversation(update, context):
@@ -53,8 +54,32 @@ async def is_in_conversation(update, context):
         return True
     return False
 
-def entry_point_decorator(func):
+# This decorator ensures that the command is not called while in a conversation
+def command_decorator(func):
     async def wrapper(update, context):
-        context.user_data["in_conversation"] = True
+        logging.getLogger("gym_bot").debug(f"Conversation status: {context.user_data.get('in_conversation')}")
+        if await is_in_conversation(update, context):
+            return
         return await func(update, context)
     return wrapper
+
+# This decorator sets the user_data["in_conversation"] flag to True before calling the function, so that any other command decorated with command_decorator will not be called
+# every entry point is also a command, so it is decorated with command_decorator
+
+def entry_point_decorator(func):
+    @command_decorator
+    async def wrapper(update, context):
+        context.user_data["in_conversation"] = True
+        logging.getLogger("gym_bot").debug(f"Conversation started in_conversation set to {context.user_data['in_conversation']}")
+        return await func(update, context)
+    return wrapper
+
+# def exit_point_decorator(func):
+#     async def wrapper(update, context):
+#         context.user_data["in_conversation"] = False
+#         return await func(update, context)
+#     return wrapper
+
+def end_conversation(update, context):
+    context.user_data["in_conversation"] = False
+    return ConversationHandler.END

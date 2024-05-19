@@ -22,7 +22,7 @@ async def choose_list(update: Update, context: CallbackContext):
     users_list = database[effective_list]
     if users_list.count_documents({}) == 0:
         await query.edit_message_text("Nessun utente in lista.")
-        return ConversationHandler.END
+        return shared.end_conversation(update, context)
     # Create a message with all the members names and IDs
     message_list = ""
     # for member in users_list.find(): ordered by full_name alphabetically
@@ -45,7 +45,7 @@ async def get_id(update: Update, context: CallbackContext):
     database.client.close()
     if not user:
         await update.message.reply_text("ID non valido. Ricomincia -> /rimuovi_utente")
-        return ConversationHandler.END
+        return shared.end_conversation(update, context)
     
     context.user_data["user_to_remove"] = user
     keyboard = [[InlineKeyboardButton("Si", callback_data="yes"), InlineKeyboardButton("No", callback_data="no")]]
@@ -53,6 +53,7 @@ async def get_id(update: Update, context: CallbackContext):
 
     return "confirm"
 
+ 
 async def confirm(update: Update, context: CallbackContext):
     query = update.callback_query
     user = context.user_data["user_to_remove"]
@@ -66,4 +67,4 @@ async def confirm(update: Update, context: CallbackContext):
         await query.edit_message_text("Operazione annullata.")
 
     database.client.close()
-    return ConversationHandler.END
+    return shared.end_conversation(update, context)

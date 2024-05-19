@@ -5,6 +5,7 @@ import pymongo
 import logging
 config = shared.config
 
+@shared.entry_point_decorator
 async def accetta_iscrizione(update: Update, context: CallbackContext):
     user = update.effective_user
     if user.id not in config["ADMINS"].values():
@@ -15,7 +16,7 @@ async def accetta_iscrizione(update: Update, context: CallbackContext):
 
     if waiting_list.count_documents({}) == 0:
         await update.message.reply_text("Nessun utente in lista d'attesa.")
-        return ConversationHandler.END
+        return shared.end_conversation(update, context)
     
     users = waiting_list.find()
 
@@ -30,10 +31,11 @@ async def accetta_iscrizione(update: Update, context: CallbackContext):
     database.client.close()
     return "user_selected"
 
+ 
 async def user_selected(update: Update, context: CallbackContext):
     query = update.callback_query
     user_id = query.data
-    logging.info(f"User {user_id} is being added to the members.")
+    logging.getLogger("gym_bot").info(f"User {user_id} is being added to the members.")
 
     database = shared.get_db()
     waiting_list = database["waiting_list"]
@@ -41,7 +43,7 @@ async def user_selected(update: Update, context: CallbackContext):
     user = waiting_list.find_one({"id": user_id})
     if user is None:
         await query.message.reply_text("Utente non trovato.")
-        return ConversationHandler.END
+        return shared.end_conversation(update, context)
     
     members.insert_one(user)
     waiting_list.delete_one(user)
@@ -51,5 +53,5 @@ async def user_selected(update: Update, context: CallbackContext):
     database.client.close()
     await query.edit_message_text(f"{user['full_name']} è stato aggiunto ai membri.")
 
-    return ConversationHandler.END
+    return shared.end_conversation(update, context)
     

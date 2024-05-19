@@ -1,4 +1,6 @@
 import logging
+from logging.handlers import RotatingFileHandler
+import argparse
 import colorlog
 from warnings import filterwarnings
 from telegram.warnings import PTBUserWarning
@@ -33,24 +35,41 @@ import module.shared as shared
 config = None
 
 # Logging
-def setup_logging():
-    filterwarnings(action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning)
+def setup_logging(logLevel=logging.INFO):
     logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("pymongo").setLevel(logging.WARNING)
 
-    console_handler = colorlog.StreamHandler()
-    file_handler = logging.FileHandler("bot.log")
+    filterwarnings(action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning)
 
+    # Create the formatters
     color_formatter = colorlog.ColoredFormatter('%(log_color)s%(levelname)s%(reset)s: %(funcName)s: %(message)s',)
     file_formatter = logging.Formatter('%(asctime)s %(levelname)s: %(module)s: %(funcName)s: %(message)s')
 
+    # Create console handler with color formatter
+    console_handler = colorlog.StreamHandler()
     console_handler.setFormatter(color_formatter)
+
+    # Create file handler with file formatter
+    file_handler = RotatingFileHandler("bot.log", maxBytes=1024000, backupCount=3)  # Rotate log files
     file_handler.setFormatter(file_formatter)
 
-    logging.basicConfig(handlers=[console_handler, file_handler], level=logging.INFO)
-    # disable logging from pymongo module
-    logging.getLogger("pymongo").setLevel(logging.WARNING)
+    telegram_logger = logging.getLogger("telegram")
+    telegram_logger.setLevel(logging.INFO)
+    telegram_logger.addHandler(console_handler)
+    telegram_logger.addHandler(file_handler)
+    telegram_logger.propagate = False
+
+    # Set up the custom logger
+    myLogger = logging.getLogger("gym_bot")
+    myLogger.setLevel(logLevel)
+    myLogger.addHandler(console_handler)
+    myLogger.addHandler(file_handler)
+    myLogger.propagate = False
+
+    myLogger.info("Logging setup completed")
 
 def add_handlers(app: Application):
+    logging.getLogger("gym_bot").info("Adding handlers")
     startHandler = CommandHandler("start", start_command.start)
     admin_commandsHandler = MessageHandler(filters.Regex(r"admin commands ->"), start_command.admin_commands)
     normal_commandsHandler = MessageHandler(filters.Regex(r"<- normal commands"), start_command.start)
@@ -81,12 +100,12 @@ def add_handlers(app: Application):
     imposta_palinsestoHandler = ConversationHandler(
         entry_points=[CommandHandler("imposta_palinsesto", imposta_palinsesto_command.imposta_palinsesto)],
         states={
-            "select_day": [CallbackQueryHandler(imposta_palinsesto_command.select_day, pattern="^(?!\/).*$")],
-            "select_start_hour": [CallbackQueryHandler(imposta_palinsesto_command.select_start_hour, pattern="^(?!\/).*$")],
-            "select_start_minute": [CallbackQueryHandler(imposta_palinsesto_command.select_start_minute, pattern="^(?!\/).*$")],
-            "select_end_hour": [CallbackQueryHandler(imposta_palinsesto_command.select_end_hour, pattern="^(?!\/).*$")],
-            "select_end_minute": [CallbackQueryHandler(imposta_palinsesto_command.select_end_minute, pattern="^(?!\/).*$")],
-            "save_palinsesto_class": [CallbackQueryHandler(imposta_palinsesto_command.save_palinsesto_class, pattern="^(?!\/).*$")]
+            "select_day": [CallbackQueryHandler(imposta_palinsesto_command.select_day, pattern="^(?!/).*$")],
+            "select_start_hour": [CallbackQueryHandler(imposta_palinsesto_command.select_start_hour, pattern="^(?!/).*$")],
+            "select_start_minute": [CallbackQueryHandler(imposta_palinsesto_command.select_start_minute, pattern="^(?!/).*$")],
+            "select_end_hour": [CallbackQueryHandler(imposta_palinsesto_command.select_end_hour, pattern="^(?!/).*$")],
+            "select_end_minute": [CallbackQueryHandler(imposta_palinsesto_command.select_end_minute, pattern="^(?!/).*$")],
+            "save_palinsesto_class": [CallbackQueryHandler(imposta_palinsesto_command.save_palinsesto_class, pattern="^(?!/).*$")]
         },
         fallbacks=[
             CommandHandler("cancel", cancel_command.cancel),
@@ -96,7 +115,7 @@ def add_handlers(app: Application):
     messaggio_broadcastHandler = ConversationHandler(
         entry_points=[CommandHandler("messaggio_broadcast", messaggio_broadcast_command.messaggio_broadcast)],
         states={
-            "get_message": [MessageHandler(None, messaggio_broadcast_command.get_message)]
+            "get_message": [MessageHandler(~filters.COMMAND, messaggio_broadcast_command.get_message)],
         },
         fallbacks=[
             CommandHandler("cancel", cancel_command.cancel),
@@ -120,6 +139,7 @@ def add_handlers(app: Application):
 
     # User commands
     infoHandler = CommandHandler("info", info_command.info)
+
     iscriviHandler = ConversationHandler(
         entry_points=[CommandHandler("iscriviti", iscriviti_command.iscriviti)],
         states={
@@ -134,8 +154,8 @@ def add_handlers(app: Application):
     palinsestoHandler = ConversationHandler(
         entry_points=[CommandHandler("palinsesto", palinsesto_command.selezionaCorso)],
         states={
-            "selezionaGiorno": [CallbackQueryHandler(palinsesto_command.selezionaGiorno, pattern="^(?!\/).*$")],
-            "sendPalinsesto": [CallbackQueryHandler(palinsesto_command.sendPalinsesto, pattern="^(?!\/).*$")]
+            "selezionaGiorno": [CallbackQueryHandler(palinsesto_command.selezionaGiorno, pattern="^(?!/).*$")],
+            "sendPalinsesto": [CallbackQueryHandler(palinsesto_command.sendPalinsesto, pattern="^(?!/).*$")]
         },
         fallbacks=[
             CommandHandler("cancel", cancel_command.cancel),
@@ -163,14 +183,19 @@ def add_handlers(app: Application):
 def load_config():
     global config
     config = shared.load_config()
-    logging.info("Config loaded")
+    logging.getLogger("gym_bot").info("Config loaded")
 
-def main():
-    setup_logging()
+def main(logLevel=logging.INFO):
+    # setup_logging()
+    setup_logging(logLevel)
     load_config()
     app = ApplicationBuilder().token(config["TOKEN"]).build()
     add_handlers(app)
     app.run_polling()
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Telegram bot for gym management")
+    parser.add_argument("-l", "--log-level", type=str, default="INFO", help="Set the log level: DEBUG, INFO, WARNING, ERROR, CRITICAL")
+    args = parser.parse_args()
+    logLevel = getattr(logging, args.log_level.upper(), None)
+    main(logLevel)
