@@ -11,7 +11,7 @@ async def info(update: Update, context: CallbackContext):
     
     picsFile = shared.get_res("community_pics") 
     if picsFile is not None:
-        logging.getLogger("gym_bot").info("Sending random picture from community_pics")
+        logging.getLogger("gym_bot").debug("Sending random picture from community_pics")
         # every line in the resource file is a URL, send a random one
         pics = picsFile.split("\n")
         try:

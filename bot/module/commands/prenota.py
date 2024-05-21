@@ -12,10 +12,12 @@ config = shared.config
 
 # @shared.command_decorator is not needed here because palinsesto.selezionaCorso already has it
 async def prenota(update: Update, context: CallbackContext):
-    if shared.is_allowed(update.effective_user):
-        return await palinsesto.selezionaCorso(update, context) # -> "selezionaGiorno"
-    await update.message.reply_text("Non sei autorizzato ad eseguire questo comando.")
-    return shared.end_conversation(update, context)
+    if update.effective_user.id in config.get("ADMINS").values():
+        database = shared.get_db()
+        if database["members"].count_documents({"id": str(update.effective_user.id)}) == 0:
+            await update.message.reply_text("Per prenotare una classe devi essere un membro anche se sei un admin. /iscriviti")
+            return shared.end_conversation(update, context)
+    return await palinsesto.selezionaCorso(update, context) # -> "selezionaGiorno"
 
 async def choose_day(update: Update, context: CallbackContext):
     context.user_data["corso"] = update.callback_query.data
